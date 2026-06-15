@@ -1,0 +1,223 @@
+<!-- ╔══════════════════════════════════════════╗
+     ║   FileForge – File Converter & Merger   ║
+     ╚══════════════════════════════════════════╝ -->
+
+<!-- ── Navbar ───────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <span class="brand-icon"><i class="bi bi-arrow-left-right"></i></span>
+      <span class="brand-name">File<strong>Forge</strong></span>
+    </a>
+    <span class="navbar-text ms-auto badge-supported">
+      Supports: PDF · CSV · XLSX · DOC · TXT · PNG · JPEG · JPG
+    </span>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────── -->
+<header class="hero-section">
+  <div class="container text-center">
+    <div class="hero-glow"></div>
+    <h1 class="hero-title">Convert &amp; Merge<br>Any File, Instantly</h1>
+    <p class="hero-sub">Upload your files, then convert to a new format or merge them into one.</p>
+  </div>
+</header>
+
+<!-- ── Main card ─────────────────────────────────── -->
+<main class="container main-container">
+  <div class="forge-card">
+
+    <!-- Drop zone -->
+    <div
+      class="drop-zone"
+      [class.drag-over]="isDragging"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()">
+      <input #fileInput type="file" hidden multiple
+        accept=".pdf,.csv,.xlsx,.doc,.txt,.png,.jpeg,.jpg"
+        (change)="onFilesSelected($event)">
+
+      <div class="drop-icon">
+        <i class="bi bi-cloud-upload-fill"></i>
+      </div>
+      <p class="drop-title">Drop files here or <span class="link-text">browse</span></p>
+      <p class="drop-hint">PDF, CSV, XLSX, DOC, TXT, PNG, JPEG, JPG — up to 50 MB each</p>
+    </div>
+
+    <!-- File list -->
+    <div class="file-list-section" *ngIf="files.length > 0">
+      <div class="file-list-header">
+        <span class="file-count">
+          <i class="bi bi-files"></i>
+          {{ files.length }} file{{ files.length > 1 ? 's' : '' }} selected
+        </span>
+        <span class="ext-pills">
+          <app-format-badge *ngFor="let e of uniqueExts" [ext]="e"></app-format-badge>
+        </span>
+        <button class="btn btn-sm btn-link text-muted clear-btn" (click)="clearAll()">
+          <i class="bi bi-x-circle"></i> Clear all
+        </button>
+      </div>
+
+      <ul class="file-list">
+        <li class="file-item" *ngFor="let f of files; let i = index">
+          <i class="bi {{ getFileIcon(f) }} file-type-icon"></i>
+          <span class="file-name">{{ f.name }}</span>
+          <span class="file-size">{{ formatSize(f.size) }}</span>
+          <button class="btn btn-sm btn-link remove-btn" (click)="removeFile(i)" title="Remove">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-bar">
+      <button
+        class="btn btn-primary btn-lg action-btn"
+        [disabled]="!canAct || isProcessing"
+        (click)="onConvertTo()">
+        <span *ngIf="!isProcessing">
+          <i class="bi bi-arrow-repeat"></i> Convert To
+        </span>
+        <span *ngIf="isProcessing" class="d-flex align-items-center gap-2">
+          <span class="spinner-border spinner-border-sm"></span> Loading options…
+        </span>
+      </button>
+
+      <button
+        class="btn btn-success btn-lg action-btn"
+        [disabled]="!canMerge"
+        (click)="onMergeFiles()">
+        <i class="bi bi-diagram-2-fill"></i> Merge Files
+      </button>
+    </div>
+
+    <p class="action-hint" *ngIf="files.length === 1">
+      <i class="bi bi-info-circle"></i>
+      Upload at least 2 files to enable merging.
+    </p>
+  </div>
+
+  <!-- How it works -->
+  <div class="how-section row g-4 mt-2">
+    <div class="col-md-4" *ngFor="let step of steps">
+      <div class="step-card">
+        <div class="step-num">{{ step.num }}</div>
+        <div class="step-icon"><i class="bi {{ step.icon }}"></i></div>
+        <h6>{{ step.title }}</h6>
+        <p>{{ step.desc }}</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Footer ─────────────────────────────────────── -->
+<footer class="text-center py-4 text-muted small">
+  FileForge &mdash; Python (Flask) + Angular &mdash; Built for showcase
+</footer>
+
+
+<!-- ════════════════════════════════════════════════
+     MODAL (Bootstrap 5)
+     ════════════════════════════════════════════════ -->
+<div class="modal fade" tabindex="-1" #mainModal>
+  <div class="modal-dialog modal-dialog-centered"
+       [class.modal-lg]="modalState === 'convert-options'">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2">
+          <i class="bi"
+             [class.bi-arrow-repeat]="modalState === 'convert-options' || modalState === 'converting'"
+             [class.bi-diagram-2-fill]="modalState === 'merging'"
+             [class.bi-check-circle-fill]="modalState === 'success'"
+             [class.bi-exclamation-triangle-fill]="modalState === 'error'"></i>
+          {{ modalTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Convert options -->
+        <ng-container *ngIf="modalState === 'convert-options'">
+          <p class="mb-3 text-muted">
+            Choose the format you want to convert
+            <span *ngFor="let e of uniqueExts; let last = last">
+              <strong>.{{ e }}</strong><span *ngIf="!last">, </span>
+            </span>
+            to:
+          </p>
+          <div class="target-grid">
+            <button
+              *ngFor="let t of convertTargets"
+              class="target-btn"
+              [class.selected]="selectedTarget === t"
+              (click)="selectTarget(t)">
+              <app-format-badge [ext]="t" [large]="true"></app-format-badge>
+              <span class="target-label">.{{ t }}</span>
+            </button>
+          </div>
+          <p class="mt-3 text-muted small" *ngIf="convertTargets.length === 0">
+            No compatible target formats found for the selected files.
+          </p>
+        </ng-container>
+
+        <!-- Processing (converting / merging) -->
+        <ng-container *ngIf="modalState === 'converting' || modalState === 'merging'">
+          <div class="processing-state text-center py-3">
+            <div class="spinner-ring mb-3"></div>
+            <p class="mb-0">{{ modalMessage }}</p>
+            <p class="text-muted small mt-1">Please wait — this may take a moment for large files.</p>
+          </div>
+        </ng-container>
+
+        <!-- Success -->
+        <ng-container *ngIf="modalState === 'success'">
+          <div class="result-state text-center py-2">
+            <div class="result-icon success-icon">
+              <i class="bi bi-check-lg"></i>
+            </div>
+            <p class="mt-3">{{ modalMessage }}</p>
+          </div>
+        </ng-container>
+
+        <!-- Error -->
+        <ng-container *ngIf="modalState === 'error'">
+          <div class="result-state text-center py-2">
+            <div class="result-icon error-icon">
+              <i class="bi bi-exclamation-lg"></i>
+            </div>
+            <pre class="error-msg mt-3">{{ modalMessage }}</pre>
+          </div>
+        </ng-container>
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <ng-container *ngIf="modalState === 'convert-options'">
+          <button class="btn btn-outline-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn btn-primary" [disabled]="!selectedTarget" (click)="confirmConvert()">
+            <i class="bi bi-arrow-repeat"></i> Convert
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="modalState === 'success' || modalState === 'error'">
+          <button class="btn btn-primary" (click)="closeModal()">Close</button>
+        </ng-container>
+
+        <ng-container *ngIf="modalState === 'converting' || modalState === 'merging'">
+          <button class="btn btn-outline-secondary" disabled>Please wait…</button>
+        </ng-container>
+      </div>
+
+    </div>
+  </div>
+</div>
