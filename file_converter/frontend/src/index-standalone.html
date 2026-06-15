@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FileForge — File Converter & Merger</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ff-primary:  #5B4CF5;
+  --ff-accent:   #00C7B1;
+  --ff-dark:     #0D0F1A;
+  --ff-surface:  #14162B;
+  --ff-card:     #1C1F38;
+  --ff-border:   #2A2D4A;
+  --ff-text:     #E2E5FF;
+  --ff-muted:    #7880AA;
+  --ff-success:  #22c55e;
+  --ff-error:    #ef4444;
+}
+*{box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--ff-dark);color:var(--ff-text);min-height:100vh;}
+
+/* ── Navbar */
+.navbar{background:rgba(20,22,43,.97);border-bottom:1px solid var(--ff-border);backdrop-filter:blur(12px);}
+.brand-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--ff-primary),var(--ff-accent));display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.brand-name{font-size:1.2rem;font-weight:500;color:var(--ff-text);}
+.badge-supported{font-size:.7rem;color:var(--ff-muted);}
+
+/* ── Hero */
+.hero-section{padding:64px 0 36px;position:relative;overflow:hidden;}
+.hero-glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(91,76,245,.25) 0%,transparent 70%);pointer-events:none;}
+.hero-title{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;background:linear-gradient(135deg,#fff 40%,var(--ff-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:1.05rem;color:var(--ff-muted);margin-top:12px;}
+
+/* ── Card */
+.forge-card{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:20px;padding:32px;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+
+/* ── Drop zone */
+.drop-zone{border:2px dashed var(--ff-border);border-radius:14px;padding:48px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--ff-primary);background:rgba(91,76,245,.06);}
+.drop-icon{font-size:2.8rem;color:var(--ff-muted);margin-bottom:12px;transition:color .2s;}
+.drop-zone:hover .drop-icon{color:var(--ff-primary);}
+.drop-title{font-size:1.05rem;font-weight:600;margin-bottom:4px;}
+.drop-title .link-text{color:var(--ff-primary);text-decoration:underline;}
+.drop-hint{font-size:.78rem;color:var(--ff-muted);margin:0;}
+
+/* ── File list */
+.file-list{list-style:none;padding:0;margin:0;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.file-item{display:flex;align-items:center;gap:10px;background:var(--ff-surface);border:1px solid var(--ff-border);border-radius:10px;padding:10px 14px;transition:border-color .15s;}
+.file-item:hover{border-color:var(--ff-primary);}
+.file-name{flex:1;font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-size{font-size:.75rem;color:var(--ff-muted);flex-shrink:0;}
+.remove-btn{background:none;border:none;cursor:pointer;color:var(--ff-muted);padding:0 4px;font-size:.9rem;}
+.remove-btn:hover{color:var(--ff-error);}
+
+/* ── Action bar */
+.action-bar{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;}
+.action-btn{flex:1;min-width:160px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-size:1rem;font-weight:600;padding:14px 20px;transition:transform .15s;}
+.action-btn:not(:disabled):hover{transform:translateY(-2px);}
+.btn-primary-ff{background:var(--ff-primary);border-color:var(--ff-primary);color:#fff;}
+.btn-primary-ff:hover:not(:disabled){background:#4538d4;border-color:#4538d4;}
+.btn-success-ff{background:var(--ff-accent);border-color:var(--ff-accent);color:#0D0F1A;}
+.btn-success-ff:hover:not(:disabled){background:#00a896;}
+
+/* ── Format badges */
+.fmt-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.fmt-badge.large{font-size:.82rem;padding:5px 12px;border-radius:8px;}
+.fmt-pdf{background:rgba(239,68,68,.15);color:#ef4444;}
+.fmt-csv,.fmt-xlsx{background:rgba(34,197,94,.15);color:#22c55e;}
+.fmt-doc{background:rgba(59,130,246,.15);color:#60a5fa;}
+.fmt-txt{background:rgba(245,158,11,.15);color:#f59e0b;}
+.fmt-png,.fmt-jpg,.fmt-jpeg{background:rgba(0,199,177,.15);color:#00C7B1;}
+
+/* ── Step cards */
+.step-card{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:16px;padding:24px;text-align:center;height:100%;}
+.step-num{font-size:.72rem;font-weight:700;letter-spacing:.1em;color:var(--ff-primary);text-transform:uppercase;margin-bottom:10px;}
+.step-icon{font-size:1.8rem;margin-bottom:10px;color:var(--ff-accent);}
+.step-card h6{font-weight:700;margin-bottom:6px;}
+.step-card p{font-size:.82rem;color:var(--ff-muted);margin:0;}
+
+/* ── Modal overrides */
+.modal-content{background:var(--ff-card);border:1px solid var(--ff-border);border-radius:16px;color:var(--ff-text);}
+.modal-header,.modal-footer{border-color:var(--ff-border);}
+.btn-close{filter:invert(1) brightness(.7);}
+.btn-outline-secondary-ff{background:transparent;border:1px solid var(--ff-border);color:var(--ff-muted);border-radius:8px;padding:8px 18px;font-weight:600;cursor:pointer;}
+.btn-outline-secondary-ff:hover{border-color:var(--ff-primary);color:var(--ff-text);}
+
+/* ── Target grid */
+.target-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;}
+.target-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;background:var(--ff-surface);border:2px solid var(--ff-border);border-radius:14px;cursor:pointer;transition:border-color .15s,background .15s;}
+.target-btn:hover{border-color:var(--ff-primary);background:rgba(91,76,245,.08);}
+.target-btn.selected{border-color:var(--ff-primary);background:rgba(91,76,245,.15);box-shadow:0 0 0 3px rgba(91,76,245,.2);}
+.target-label{font-size:.78rem;font-weight:600;color:var(--ff-text);text-transform:uppercase;letter-spacing:.04em;}
+
+/* ── Processing */
+.spinner-ring{width:56px;height:56px;border-radius:50%;border:4px solid var(--ff-border);border-top-color:var(--ff-primary);animation:spin .9s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.result-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto;}
+.success-icon{background:rgba(34,197,94,.15);color:var(--ff-success);}
+.error-icon{background:rgba(239,68,68,.15);color:var(--ff-error);}
+.error-msg{font-family:inherit;font-size:.85rem;color:var(--ff-muted);background:var(--ff-surface);border:1px solid var(--ff-border);border-radius:10px;padding:14px;white-space:pre-wrap;text-align:left;}
+
+/* ── Misc */
+.file-list-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.file-count{font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:5px;color:var(--ff-muted);}
+.ext-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.clear-btn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--ff-muted);}
+.clear-btn:hover{color:var(--ff-error);}
+.action-hint{font-size:.78rem;color:var(--ff-muted);margin-top:10px;text-align:center;}
+#file-section{margin-top:24px;}
+</style>
+</head>
+<body>
+
+<!-- ── Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <div class="brand-icon"><i class="bi bi-arrow-left-right text-white"></i></div>
+      <span class="brand-name">File<strong>Forge</strong></span>
+    </a>
+    <span class="navbar-text ms-auto badge-supported">
+      Supports: PDF · CSV · XLSX · DOC · TXT · PNG · JPEG · JPG
+    </span>
+  </div>
+</nav>
+
+<!-- ── Hero -->
+<header class="hero-section">
+  <div class="container text-center">
+    <div class="hero-glow"></div>
+    <h1 class="hero-title">Convert &amp; Merge<br>Any File, Instantly</h1>
+    <p class="hero-sub">Upload your files, then convert to a new format or merge them into one.</p>
+  </div>
+</header>
+
+<!-- ── Main -->
+<main class="container pb-5">
+  <div class="forge-card">
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="dropZone">
+      <input id="fileInput" type="file" hidden multiple
+        accept=".pdf,.csv,.xlsx,.doc,.txt,.png,.jpeg,.jpg">
+      <div class="drop-icon"><i class="bi bi-cloud-upload-fill"></i></div>
+      <p class="drop-title">Drop files here or <span class="link-text">browse</span></p>
+      <p class="drop-hint">PDF, CSV, XLSX, DOC, TXT, PNG, JPEG, JPG — up to 50 MB each</p>
+    </div>
+
+    <!-- File list -->
+    <div id="file-section" style="display:none">
+      <div class="file-list-header">
+        <span class="file-count"><i class="bi bi-files"></i><span id="file-count-text">0 files selected</span></span>
+        <div class="ext-pills" id="ext-pills"></div>
+        <button class="clear-btn" onclick="clearAll()"><i class="bi bi-x-circle"></i> Clear all</button>
+      </div>
+      <ul class="file-list" id="file-list"></ul>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-bar">
+      <button class="btn action-btn btn-primary-ff" id="convertBtn" onclick="onConvertTo()" disabled>
+        <i class="bi bi-arrow-repeat"></i> Convert To
+      </button>
+      <button class="btn action-btn btn-success-ff" id="mergeBtn" onclick="onMergeFiles()" disabled>
+        <i class="bi bi-diagram-2-fill"></i> Merge Files
+      </button>
+    </div>
+    <p class="action-hint" id="merge-hint" style="display:none">
+      <i class="bi bi-info-circle"></i> Upload at least 2 files to enable merging.
+    </p>
+  </div>
+
+  <!-- Steps -->
+  <div class="row g-4 mt-2">
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-num">Step 01</div>
+        <div class="step-icon"><i class="bi bi-cloud-upload-fill"></i></div>
+        <h6>Upload Your Files</h6>
+        <p>Drag & drop or browse. Supports PDF, CSV, XLSX, DOC, TXT, PNG, JPEG, JPG.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-num">Step 02</div>
+        <div class="step-icon"><i class="bi bi-arrow-repeat"></i></div>
+        <h6>Convert or Merge</h6>
+        <p>Pick a target format to convert, or merge files of the same type into one.</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-num">Step 03</div>
+        <div class="step-icon"><i class="bi bi-download"></i></div>
+        <h6>Download Result</h6>
+        <p>Your converted or merged file downloads instantly. Multiple files come as a ZIP.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="text-center py-4 text-muted small">
+  FileForge — Python (Flask) + Angular — Built for showcase
+</footer>
+
+
+<!-- ═══════════════════════ MODAL ═══════════════════════ -->
+<div class="modal fade" id="mainModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" id="modalDialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2" id="modalTitle">
+          <i class="bi" id="modalIcon"></i>
+          <span id="modalTitleText"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const API = 'http://localhost:5000/api';
+let files = [];
+let modal = null;
+
+const ALLOWED = ['pdf','csv','xlsx','doc','txt','png','jpeg','jpg'];
+const FILE_ICONS = {
+  pdf:  'bi-file-earmark-pdf-fill text-danger',
+  csv:  'bi-file-earmark-spreadsheet-fill text-success',
+  xlsx: 'bi-file-earmark-excel-fill text-success',
+  doc:  'bi-file-earmark-word-fill text-primary',
+  txt:  'bi-file-earmark-text-fill text-warning',
+  png:  'bi-file-earmark-image-fill text-info',
+  jpg:  'bi-file-earmark-image-fill text-info',
+  jpeg: 'bi-file-earmark-image-fill text-info',
+};
+const FMT_COLORS = {
+  pdf:'fmt-pdf', csv:'fmt-csv', xlsx:'fmt-xlsx', doc:'fmt-doc',
+  txt:'fmt-txt', png:'fmt-png', jpg:'fmt-jpg', jpeg:'fmt-jpeg'
+};
+
+function getExt(f){ return f.name.split('.').pop().toLowerCase(); }
+function fmtSize(b){ if(b<1024) return b+' B'; if(b<1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+function uniqueExts(){ return [...new Set(files.map(getExt))]; }
+function badgeHtml(ext, large=false){ return `<span class="fmt-badge ${large?'large':''} ${FMT_COLORS[ext]||''}">${ext.toUpperCase()}</span>`; }
+
+// ── Drop zone ─────────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+const fi = document.getElementById('fileInput');
+
+dz.addEventListener('click', ()=> fi.click());
+fi.addEventListener('change', ()=>{ addFiles([...fi.files]); fi.value=''; });
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', ()=> dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('drag-over'); addFiles([...e.dataTransfer.files]); });
+
+function addFiles(incoming){
+  const valid   = incoming.filter(f => ALLOWED.includes(getExt(f)));
+  const invalid = incoming.filter(f => !ALLOWED.includes(getExt(f)));
+  const newOnes = valid.filter(nf => !files.some(ex => ex.name===nf.name && ex.size===nf.size));
+  files = [...files, ...newOnes];
+  render();
+  if(invalid.length)
+    showModal('error','Unsupported File Type',
+      `Skipped:\n${invalid.map(f=>f.name).join(', ')}\n\nSupported: ${ALLOWED.join(', ')}`);
+}
+
+function removeFile(i){ files.splice(i,1); render(); }
+function clearAll(){ files=[]; render(); }
+
+function render(){
+  const sec   = document.getElementById('file-section');
+  const list  = document.getElementById('file-list');
+  const pills = document.getElementById('ext-pills');
+  const hint  = document.getElementById('merge-hint');
+  document.getElementById('file-count-text').textContent =
+    `${files.length} file${files.length!==1?'s':''} selected`;
+
+  sec.style.display  = files.length ? 'block' : 'none';
+  hint.style.display = files.length === 1 ? 'block' : 'none';
+
+  pills.innerHTML = uniqueExts().map(e => badgeHtml(e)).join('');
+
+  list.innerHTML = files.map((f,i)=>`
+    <li class="file-item">
+      <i class="bi ${FILE_ICONS[getExt(f)]||'bi-file-earmark-fill text-secondary'} file-type-icon fs-5"></i>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${fmtSize(f.size)}</span>
+      <button class="remove-btn" onclick="removeFile(${i})"><i class="bi bi-x-lg"></i></button>
+    </li>`).join('');
+
+  document.getElementById('convertBtn').disabled = files.length === 0;
+  document.getElementById('mergeBtn').disabled   = files.length < 2;
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function getModal(){
+  if(!modal) modal = new bootstrap.Modal(document.getElementById('mainModal'));
+  return modal;
+}
+
+function showModal(type, title, body, footerHtml=''){
+  const icons = {
+    'convert-options':'bi-arrow-repeat',
+    converting:'bi-arrow-repeat',merging:'bi-diagram-2-fill',
+    success:'bi-check-circle-fill',error:'bi-exclamation-triangle-fill'
+  };
+  document.getElementById('modalIcon').className = 'bi ' + (icons[type]||'bi-info-circle-fill');
+  document.getElementById('modalTitleText').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = footerHtml ||
+    `<button class="btn btn-primary-ff btn-primary" data-bs-dismiss="modal">Close</button>`;
+  document.getElementById('modalDialog').className =
+    'modal-dialog modal-dialog-centered' + (type==='convert-options'?' modal-lg':'');
+  getModal().show();
+}
+
+// ── Convert To ────────────────────────────────────────────────────────────────
+async function onConvertTo(){
+  document.getElementById('convertBtn').innerHTML =
+    '<span class="spinner-border spinner-border-sm me-2"></span>Loading options…';
+  document.getElementById('convertBtn').disabled = true;
+
+  try {
+    const fd = new FormData();
+    files.forEach(f=>fd.append('files',f));
+    const res = await fetch(`${API}/conversion-options`,{method:'POST',body:fd});
+    const data = await res.json();
+
+    document.getElementById('convertBtn').innerHTML =
+      '<i class="bi bi-arrow-repeat"></i> Convert To';
+    document.getElementById('convertBtn').disabled = false;
+
+    if(data.error){ showModal('error','Cannot Convert',`<pre class="error-msg">${data.error}</pre>`); return; }
+    if(!data.targets.length){
+      showModal('error','No Conversion Available',
+        `<pre class="error-msg">No common target formats found for: ${uniqueExts().join(', ')}</pre>`); return;
+    }
+
+    const btns = data.targets.map(t=>`
+      <button class="target-btn" id="tb-${t}" onclick="selectTarget('${t}')">
+        ${badgeHtml(t, true)}
+        <span class="target-label">.${t}</span>
+      </button>`).join('');
+
+    showModal('convert-options','Convert To…',
+      `<p class="mb-3 text-muted">Choose the target format for
+        ${uniqueExts().map(e=>`<strong>.${e}</strong>`).join(', ')}:</p>
+       <div class="target-grid">${btns}</div>`,
+      `<button class="btn-outline-secondary-ff" data-bs-dismiss="modal">Cancel</button>
+       <button class="btn btn-primary-ff btn-primary" id="confirmConvertBtn"
+         onclick="confirmConvert()" disabled>
+         <i class="bi bi-arrow-repeat"></i> Convert
+       </button>`
+    );
+  } catch(e){
+    document.getElementById('convertBtn').innerHTML = '<i class="bi bi-arrow-repeat"></i> Convert To';
+    document.getElementById('convertBtn').disabled = false;
+    showModal('error','Connection Error',
+      `<pre class="error-msg">Could not reach the backend.\n\nMake sure the Flask server is running:\n  python backend/app.py</pre>`);
+  }
+}
+
+let selectedTarget = null;
+function selectTarget(t){
+  selectedTarget = t;
+  document.querySelectorAll('.target-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById(`tb-${t}`)?.classList.add('selected');
+  const cb = document.getElementById('confirmConvertBtn');
+  if(cb) cb.disabled = false;
+}
+
+async function confirmConvert(){
+  if(!selectedTarget) return;
+  const target = selectedTarget;
+
+  // Same-ext guard
+  if(uniqueExts().length===1 && uniqueExts()[0]===target){
+    showModal('error','Same Format',
+      `<pre class="error-msg">Files are already .${target}.\nChoose a different target format.</pre>`);
+    return;
+  }
+
+  showModal('converting','Converting…',
+    `<div class="text-center py-3">
+       <div class="spinner-ring mb-3"></div>
+       <p>Converting ${files.length} file(s) to .${target}…</p>
+       <p class="text-muted small">Please wait.</p>
+     </div>`, ' ');
+
+  try {
+    const fd = new FormData();
+    files.forEach(f=>fd.append('files',f));
+    fd.append('target',target);
+    const res = await fetch(`${API}/convert`,{method:'POST',body:fd});
+    if(!res.ok){
+      const j = await res.json().catch(()=>({error:'Unknown error'}));
+      showModal('error','Conversion Failed',`<pre class="error-msg">${j.error||'Unknown error'}</pre>`); return;
+    }
+    await downloadBlob(res, target);
+  } catch(e){
+    showModal('error','Error',`<pre class="error-msg">${e.message}</pre>`);
+  }
+}
+
+// ── Merge ─────────────────────────────────────────────────────────────────────
+async function onMergeFiles(){
+  const exts = uniqueExts();
+  if(exts.length>1){
+    showModal('error','Cannot Merge — Different File Types',
+      `<pre class="error-msg">All files must share the same extension to merge.\n\nFound: ${exts.map(e=>'.'+e).join(', ')}\n\nPlease upload files with the same format.</pre>`);
+    return;
+  }
+
+  showModal('merging','Merge Files',
+    `<div class="text-center py-3">
+       <div class="spinner-ring mb-3"></div>
+       <p>Merging ${files.length} ${exts[0].toUpperCase()} files…</p>
+     </div>`, ' ');
+
+  try {
+    const fd = new FormData();
+    files.forEach(f=>fd.append('files',f));
+    const res = await fetch(`${API}/merge`,{method:'POST',body:fd});
+    if(!res.ok){
+      const j = await res.json().catch(()=>({error:'Unknown error'}));
+      showModal('error','Merge Failed',`<pre class="error-msg">${j.error||'Unknown error'}</pre>`); return;
+    }
+    await downloadBlob(res, exts[0]);
+  } catch(e){
+    showModal('error','Error',`<pre class="error-msg">${e.message}</pre>`);
+  }
+}
+
+async function downloadBlob(res, ext){
+  const blob = await res.blob();
+  const isZip = blob.type==='application/zip';
+  const name  = isZip ? 'converted_files.zip' : `result.${ext}`;
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+
+  showModal('success','Done!',
+    `<div class="text-center py-2">
+       <div class="result-icon success-icon"><i class="bi bi-check-lg"></i></div>
+       <p class="mt-3">Your file${isZip?'s have':' has'} been downloaded as <strong>"${name}"</strong>.</p>
+     </div>`);
+}
+</script>
+</body>
+</html>

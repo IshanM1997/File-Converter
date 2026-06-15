@@ -1,0 +1,71 @@
+/* ── FileForge global styles ─────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --ff-primary:   #5B4CF5;
+  --ff-primary-h: #4538d4;
+  --ff-accent:    #00C7B1;
+  --ff-dark:      #0D0F1A;
+  --ff-surface:   #14162B;
+  --ff-card:      #1C1F38;
+  --ff-border:    #2A2D4A;
+  --ff-text:      #E2E5FF;
+  --ff-muted:     #7880AA;
+  --ff-success:   #22c55e;
+  --ff-error:     #ef4444;
+  --ff-warning:   #f59e0b;
+  --bs-font-sans-serif: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--bs-font-sans-serif);
+  background: var(--ff-dark);
+  color: var(--ff-text);
+  min-height: 100vh;
+}
+
+/* Bootstrap overrides */
+.btn-primary {
+  background: var(--ff-primary);
+  border-color: var(--ff-primary);
+  font-weight: 600;
+  &:hover, &:focus { background: var(--ff-primary-h); border-color: var(--ff-primary-h); }
+}
+
+.btn-outline-primary {
+  color: var(--ff-primary);
+  border-color: var(--ff-primary);
+  font-weight: 600;
+  &:hover { background: var(--ff-primary); color: #fff; }
+}
+
+.btn-success {
+  background: var(--ff-accent);
+  border-color: var(--ff-accent);
+  color: #0D0F1A;
+  font-weight: 600;
+  &:hover { background: #00a896; border-color: #00a896; color: #0D0F1A; }
+}
+
+.modal-content {
+  background: var(--ff-card);
+  border: 1px solid var(--ff-border);
+  border-radius: 16px;
+  color: var(--ff-text);
+}
+.modal-header {
+  border-color: var(--ff-border);
+}
+.modal-footer {
+  border-color: var(--ff-border);
+}
+.btn-close {
+  filter: invert(1) brightness(0.7);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ff-surface); }
+::-webkit-scrollbar-thumb { background: var(--ff-border); border-radius: 3px; }
